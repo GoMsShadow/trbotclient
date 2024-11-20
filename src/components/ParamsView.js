@@ -76,7 +76,7 @@ const ParamsView = () => {
     try {
       setLoading(true);
       const { data } = await apiGetSymbols();
-      setSymbols(data.symbols);
+      setSymbols(data?.symbols ?? []);
       setLoading(false);
     } catch (error) {
       console.error(error);
