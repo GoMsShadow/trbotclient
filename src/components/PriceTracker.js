@@ -1,6 +1,10 @@
-import { Table, Tabs } from "antd";
+import { Input, Select, Table, Tabs } from "antd";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { apiGetSearches } from "../api";
+import { DebounceSelect } from "../utils/custom";
+import { SearchOutlined } from "@ant-design/icons";
+import { debounce } from "lodash";
 
 const API_URL = "https://api.binance.com/api/v3/ticker/24hr";
 
@@ -8,29 +12,56 @@ const symbols = ["USDT", "USDC", "ETH", "BTC", "TUSD", "EUR"];
 
 const PriceTracker = () => {
   const [selectedSymbol, setSelectedSymbol] = useState(symbols[0]);
-
   const [dataSource, setDataSource] = useState([]);
+  const [allPrices, setAllPrices] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [hotSearches, setHotSearches] = useState([]);
+  const [searchOptions, setSearchOptions] = useState([]);
 
   useEffect(() => {
     fetchData();
-    // const interval = setInterval(fetchData, 10000); // Update every 30 seconds
+    // const interval = setInterval(fetchData, 2000);
     // return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    fetchData();
+    if (!searchTerm || !searchTerm.length) {
+      setDataSource(
+        allPrices.filter(
+          ({ symbol }) =>
+            symbol.slice(-selectedSymbol.length) === selectedSymbol
+        )
+      );
+    } else {
+      debouncedSearch(searchTerm);
+      return () => {
+        debouncedSearch.cancel();
+      };
+    }
+  }, [selectedSymbol, allPrices, searchTerm]);
+
+  useEffect(() => {
+    setSearchTerm("");
   }, [selectedSymbol]);
+
+  const fetchHotSearches = async () => {
+    try {
+      const {
+        data: { searches },
+      } = await apiGetSearches();
+      setSearchOptions(
+        searches.map(({ id, symbol }) => ({ value: id, label: symbol }))
+      );
+    } catch (error) {}
+  };
 
   const fetchData = async () => {
     try {
       const { data } = await axios.get(API_URL);
-      setDataSource(
+      setAllPrices(
         data
-          .filter(
-            ({ symbol, lastPrice }) =>
-              symbol.slice(-selectedSymbol.length) === selectedSymbol &&
-              +lastPrice
-          )
+          .filter(({ lastPrice }) => +lastPrice)
           .map((item) => ({
             symbol: item.symbol,
             price: +item.lastPrice,
@@ -41,6 +72,14 @@ const PriceTracker = () => {
       console.log(error);
     }
   };
+
+  const debouncedSearch = debounce((term) => {
+    setDataSource(
+      allPrices.filter(({ symbol }) =>
+        symbol.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, 300);
 
   const columns = [
     {
@@ -77,18 +116,38 @@ const PriceTracker = () => {
 
   return (
     <div>
+      {/* <DebounceSelect
+        placeholder="Search symbol"
+        fetchOptions={fetchUserList}
+        onChange={(value) => {
+          setValue(newValue);
+        }}
+        style={{
+          width: "100%",
+        }}
+      /> */}
+      <Input
+        placeholder="Search"
+        prefix={<SearchOutlined />}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
       <Tabs
         defaultActiveKey="tether"
         items={symbols.map((symbol) => ({ key: symbol, label: symbol }))}
-        onChange={setSelectedSymbol}
+        onChange={(value) => {
+          setSelectedSymbol(value);
+        }}
       ></Tabs>
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        pagination={false}
-        className="price-table"
-        scroll={{ y: 600 }}
-      />
+      <div style={{ maxHeight: "calc(100vh - 164px)", overflowY: "auto" }}>
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          pagination={false}
+          className="price-table"
+          scroll={{ y: "calc(100vh - 196px)" }}
+        />
+      </div>
     </div>
   );
 };

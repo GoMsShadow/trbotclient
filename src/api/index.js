@@ -41,3 +41,11 @@ export const apiUpdateSymbol = async (id, name) => {
 export const apiDeleteSymbol = async (id) => {
   return await axios.delete(`${API_URL}/symbol/${id}`);
 };
+
+export const apiGetSearches = async () => {
+  return await axios.get(`${API_URL}/search`);
+};
+
+export const apiUpdateSearch = async (symbol) => {
+  return await axios.put(`${API_URL}/search`, { symbol });
+};

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { UndoOutlined } from "@ant-design/icons";
 import { dummyData } from "../utils/constants";
 import { apiCancelAllOpenOrders, apiCancelOrder } from "../api";
+import { render } from "@testing-library/react";
 const { RangePicker } = DatePicker;
 
 const sides = [
@@ -89,11 +90,11 @@ const OrderList = () => {
   };
 
   const columns = [
-    { key: "side", dataIndex: "side", title: "Side" },
-    { key: "quantity", dataIndex: "quantity", title: "Quantity" },
-    { key: "type", dataIndex: "type", title: "Type" },
+    { key: "side", dataIndex: "side", title: "Side", width: 90 },
+    { key: "quantity", dataIndex: "quantity", title: "Quantity", width: 100 },
+    { key: "type", dataIndex: "type", title: "Type", width: 100 },
     { key: "orderId", dataIndex: "orderId", title: "Order Id" },
-    { key: "status", dataIndex: "status", title: "Status" },
+    { key: "status", dataIndex: "status", title: "Status", width: 100 },
     {
       key: "action",
       dataIndex: "action",
@@ -108,7 +109,8 @@ const OrderList = () => {
             Cancel
           </Button>
         ),
-      width: 120,
+      width: 110,
+      align: "center",
     },
   ];
 
@@ -192,12 +194,16 @@ const OrderList = () => {
           <Spin />
         </Row>
       ) : (
-        <Table
-          dataSource={dataSource}
-          columns={columns}
-          rowKey={"key"}
-          className="orders-table"
-        />
+        <div style={{ maxHeight: "calc(100vh - 320px)", overflowY: "auto" }}>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            rowKey={"key"}
+            className="orders-table"
+            pagination={false}
+            scroll={{ y: "calc(100vh - 420px)" }}
+          />
+        </div>
       )}
     </>
   );

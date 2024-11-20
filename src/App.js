@@ -21,7 +21,7 @@ function App() {
         </Content>
         <Sider
           width={380}
-          style={{ background: "none", padding: "0 20px 20px" }}
+          style={{ background: "none", padding: "10px 0 0 20px" }}
         >
           <PriceTracker />
         </Sider>
