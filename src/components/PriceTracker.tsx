@@ -1,8 +1,6 @@
-import { Input, Select, Table, Tabs } from "antd";
+import { Input, Table, Tabs } from "antd";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { apiGetSearches } from "../api";
-import { DebounceSelect } from "../utils/custom";
+import { useEffect, useState } from "react";
 import { SearchOutlined } from "@ant-design/icons";
 import { debounce } from "lodash";
 
@@ -10,14 +8,17 @@ const API_URL = "https://api.binance.com/api/v3/ticker/24hr";
 
 const symbols = ["USDT", "USDC", "ETH", "BTC", "TUSD", "EUR"];
 
+type PriceChange = {
+  symbol: string;
+  price: number;
+  change: number;
+};
+
 const PriceTracker = () => {
   const [selectedSymbol, setSelectedSymbol] = useState(symbols[0]);
-  const [dataSource, setDataSource] = useState([]);
-  const [allPrices, setAllPrices] = useState([]);
+  const [dataSource, setDataSource] = useState<PriceChange[]>([]);
+  const [allPrices, setAllPrices] = useState<PriceChange[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const [hotSearches, setHotSearches] = useState([]);
-  const [searchOptions, setSearchOptions] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -45,24 +46,24 @@ const PriceTracker = () => {
     setSearchTerm("");
   }, [selectedSymbol]);
 
-  const fetchHotSearches = async () => {
-    try {
-      const {
-        data: { searches },
-      } = await apiGetSearches();
-      setSearchOptions(
-        searches.map(({ id, symbol }) => ({ value: id, label: symbol }))
-      );
-    } catch (error) {}
-  };
+  // const fetchHotSearches = async () => {
+  //   try {
+  //     const {
+  //       data: { searches },
+  //     } = await apiGetSearches();
+  //     setSearchOptions(
+  //       searches.map(({ id, symbol }) => ({ value: id, label: symbol }))
+  //     );
+  //   } catch (error) {}
+  // };
 
   const fetchData = async () => {
     try {
       const { data } = await axios.get(API_URL);
       setAllPrices(
         data
-          .filter(({ lastPrice }) => +lastPrice)
-          .map((item) => ({
+          .filter(({ lastPrice }: any) => +lastPrice)
+          .map((item: any) => ({
             symbol: item.symbol,
             price: +item.lastPrice,
             change: +item.priceChangePercent,
@@ -86,7 +87,7 @@ const PriceTracker = () => {
       key: "pair",
       dataIndex: "symbol",
       title: "Pair",
-      render: (_, item) => (
+      render: (_: any, item: PriceChange) => (
         <div>
           <span style={{ color: "white" }}>
             {item.symbol.slice(0, -selectedSymbol.length)}
@@ -99,23 +100,23 @@ const PriceTracker = () => {
       key: "price",
       dataIndex: "price",
       title: "Price",
-      sorter: (a, b) => a.price - b.price,
+      sorter: (a: PriceChange, b: PriceChange) => a.price - b.price,
     },
     {
       key: "change",
       dataIndex: "change",
       title: "Change",
-      render: (_, item) => (
+      render: (_: any, item: PriceChange) => (
         <span style={{ color: item.change >= 0 ? "#0ECB81" : "#F6465D" }}>
           {item.change}%
         </span>
       ),
-      sorter: (a, b) => a.change - b.change,
+      sorter: (a: PriceChange, b: PriceChange) => a.change - b.change,
     },
   ];
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       {/* <DebounceSelect
         placeholder="Search symbol"
         fetchOptions={fetchUserList}
@@ -139,13 +140,14 @@ const PriceTracker = () => {
           setSelectedSymbol(value);
         }}
       ></Tabs>
-      <div style={{ maxHeight: "calc(100vh - 164px)", overflowY: "auto" }}>
+      <div style={{ maxHeight: "calc(100vh - 146px)", overflowY: "auto" }}>
         <Table
           columns={columns}
           dataSource={dataSource}
+          rowKey={"symbol"}
           pagination={false}
           className="price-table"
-          scroll={{ y: "calc(100vh - 196px)" }}
+          scroll={{ y: "calc(100vh - 178px)" }}
         />
       </div>
     </div>

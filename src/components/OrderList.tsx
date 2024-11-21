@@ -1,18 +1,28 @@
-import { Button, Row, Select, Space, Table, DatePicker, Spin } from "antd";
-import React, { useEffect, useState } from "react";
+import {
+  Button,
+  Row,
+  Select,
+  Space,
+  Table,
+  DatePicker,
+  Spin,
+  Grid,
+} from "antd";
+import { useEffect, useState } from "react";
 import { UndoOutlined } from "@ant-design/icons";
 import { dummyData } from "../utils/constants";
 import { apiCancelAllOpenOrders, apiCancelOrder } from "../api";
-import { render } from "@testing-library/react";
+import { ColumnsType } from "antd/es/table";
 const { RangePicker } = DatePicker;
+const { useBreakpoint } = Grid;
 
-const sides = [
+const SIDES = [
   { value: "all", label: "All" },
   { value: "BUY", label: "BUY" },
   { value: "SELL", label: "SELL" },
 ];
 
-const types = [
+const TYPES = [
   { value: "all", label: "All" },
   { value: "LIMIT", label: "Limit" },
   { value: "MARKET", label: "Market" },
@@ -25,11 +35,13 @@ const OrderList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [historyType, setHistoryType] = useState(ALL_ORDERS);
 
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<any[]>([]);
 
   const [selectedSide, setSelectedSide] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [ordersShown, setOrdersShown] = useState(orders);
+
+  const screen = useBreakpoint();
 
   useEffect(() => {
     loadAllOrders();
@@ -70,7 +82,11 @@ const OrderList = () => {
     // }
   };
 
-  const onCancelOrder = async (params) => {
+  const onCancelOrder = async (params: {
+    symbol: string;
+    orderId?: string;
+    origClientOrderId?: string;
+  }) => {
     try {
       const { data } = await apiCancelOrder(params);
       console.log(data);
@@ -89,17 +105,28 @@ const OrderList = () => {
     }
   };
 
-  const columns = [
-    { key: "side", dataIndex: "side", title: "Side", width: 90 },
-    { key: "quantity", dataIndex: "quantity", title: "Quantity", width: 100 },
-    { key: "type", dataIndex: "type", title: "Type", width: 100 },
+  const columns: ColumnsType = [
+    {
+      key: "side",
+      dataIndex: "side",
+      title: "Side",
+      width: 70,
+      ...(!screen.md && { fixed: "left" }),
+    },
+    {
+      key: "quantity",
+      dataIndex: "quantity",
+      title: "Quantity",
+      width: 80,
+    },
+    { key: "type", dataIndex: "type", title: "Type", width: 90 },
     { key: "orderId", dataIndex: "orderId", title: "Order Id" },
-    { key: "status", dataIndex: "status", title: "Status", width: 100 },
+    { key: "status", dataIndex: "status", title: "Status", width: 90 },
     {
       key: "action",
       dataIndex: "action",
       title: "Action",
-      render: (_, { symbol, orderId, origClientOrderId, type }) =>
+      render: (_: any, { symbol, orderId, origClientOrderId, type }: any) =>
         type === "LIMIT" && (
           <Button
             onClick={() =>
@@ -109,16 +136,18 @@ const OrderList = () => {
             Cancel
           </Button>
         ),
-      width: 110,
+      width: 100,
       align: "center",
+      ...(!screen.md && { fixed: "right" }),
     },
   ];
 
-  const dataSource = ordersShown.map((order) => {
+  const dataSource = ordersShown.map((order, index) => {
     const { cummulativeQuoteQty, executedQty, ...rest } = order;
 
     return {
       ...rest,
+      index,
       quantity: +executedQty
         ? (+cummulativeQuoteQty / +executedQty).toFixed(2)
         : 0,
@@ -154,19 +183,19 @@ const OrderList = () => {
           <UndoOutlined /> Refresh
         </Button>
       </Row>
-      <Row justify={"space-between"} style={{ marginBottom: 16 }}>
-        <Space>
-          {historyType === ALL_ORDERS && (
-            <Space style={{ marginRight: 12 }}>
-              <span style={{ color: "white" }}>Time</span>
-              <RangePicker />
-            </Space>
-          )}
+      <Row justify={"space-between"}>
+        {historyType === ALL_ORDERS && (
+          <Space style={{ marginRight: 12, marginBottom: 16 }}>
+            <span style={{ color: "white" }}>Time</span>
+            <RangePicker />
+          </Space>
+        )}
+        <Space style={{ marginBottom: 16 }}>
           <Space style={{ marginRight: 12 }}>
             <span style={{ color: "white" }}>Side</span>
             <Select
               defaultValue={"all"}
-              options={sides}
+              options={SIDES}
               style={{ width: 100 }}
               onChange={(value) => setSelectedSide(value)}
             />
@@ -175,33 +204,42 @@ const OrderList = () => {
             <span style={{ color: "white" }}>Type</span>
             <Select
               defaultValue={"all"}
-              options={types}
+              options={TYPES}
               style={{ width: 100 }}
               onChange={(value) => setSelectedType(value)}
             />
           </Space>
         </Space>
-        <Button
-          color="default"
-          variant="filled"
-          onClick={() => onCancelAllOrders()}
-        >
-          Cancel All
-        </Button>
+        {historyType === OPEN_ORDERS && (
+          <Button
+            color="default"
+            variant="filled"
+            onClick={() => onCancelAllOrders()}
+          >
+            Cancel All
+          </Button>
+        )}
       </Row>
       {isLoading ? (
         <Row justify={"center"}>
           <Spin />
         </Row>
       ) : (
-        <div style={{ maxHeight: "calc(100vh - 320px)", overflowY: "auto" }}>
+        <div
+          {...(screen.lg && {
+            style: { maxHeight: "calc(100vh - 302px)", overflowY: "auto" },
+          })}
+        >
           <Table
             dataSource={dataSource}
             columns={columns}
-            rowKey={"key"}
+            rowKey={"index"}
             className="orders-table"
             pagination={false}
-            scroll={{ y: "calc(100vh - 420px)" }}
+            {...(screen.lg && {
+              scroll: { y: "calc(100vh - 402px)" },
+            })}
+            {...(!screen.md && { scroll: { x: "max-content" } })}
           />
         </div>
       )}

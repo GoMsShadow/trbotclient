@@ -11,8 +11,10 @@ import {
   Modal,
   List,
   Spin,
+  Grid,
+  Drawer,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   apiCreateSymbol,
   apiDeleteSymbol,
@@ -21,8 +23,11 @@ import {
   apiSetParams,
   apiUpdateSymbol,
 } from "../api";
+import { TBParam, TBSymbol } from "../utils/types";
+import PriceTracker from "./PriceTracker";
+const { useBreakpoint } = Grid;
 
-const initialParams = {
+const initialParams: TBParam = {
   symbol: "",
   volume: "",
   expectedBuy: 0,
@@ -48,15 +53,17 @@ const styles = {
   },
 };
 
-const emptySymbol = { id: -1, name: "" };
-const ParamsView = () => {
-  const [tradeParams, setTradeParams] = useState(initialParams);
-  const [symbols, setSymbols] = useState([]);
+const emptySymbol: TBSymbol = { id: -1, name: "" };
+
+const ParamsView: FC = () => {
+  const [tradeParams, setTradeParams] = useState<TBParam>(initialParams);
+  const [symbols, setSymbols] = useState<TBSymbol[]>([]);
   const [modalOpened, setModalOpened] = useState(false);
-  const [symbolToEdit, setSymbolToEdit] = useState(emptySymbol);
-  const [errorMessage, setErrorMessage] = useState();
+  const [symbolToEdit, setSymbolToEdit] = useState<TBSymbol>(emptySymbol);
+  const [errorMessage, setErrorMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState();
+  const screen = useBreakpoint();
+  const [sideBarOpened, setSideBarOpened] = useState(false);
 
   useEffect(() => {
     getParams();
@@ -133,19 +140,20 @@ const ParamsView = () => {
     }
   };
 
-  const handleDeleteSymbol = async (id) => {
+  const handleDeleteSymbol = async (id: number) => {
     setLoading(true);
     await apiDeleteSymbol(id);
     await getSymbols();
   };
+
   return (
-    <Layout className="mt-5">
+    <Layout>
       <Modal
         title="Symbol Manager"
         open={modalOpened}
         onCancel={() => {
           setModalOpened(false);
-          setErrorMessage();
+          setErrorMessage(undefined);
           setSymbolToEdit(emptySymbol);
         }}
         footer={null}
@@ -157,7 +165,7 @@ const ParamsView = () => {
               value={symbolToEdit.name}
               onChange={(e) => {
                 setSymbolToEdit({ ...symbolToEdit, name: e.target.value });
-                setErrorMessage();
+                setErrorMessage(undefined);
               }}
               style={{ marginRight: 8 }}
             />
@@ -203,6 +211,20 @@ const ParamsView = () => {
       </Modal>
       <Tabs
         defaultActiveKey="trade"
+        {...(!screen.lg && {
+          tabBarExtraContent: (
+            <>
+              <Button onClick={() => setSideBarOpened(true)}>Prices</Button>
+              <Drawer
+                onClose={() => setSideBarOpened(false)}
+                open={sideBarOpened}
+                closeIcon={null}
+              >
+                <PriceTracker />
+              </Drawer>
+            </>
+          ),
+        })}
         items={[
           {
             key: "trade",
@@ -217,8 +239,12 @@ const ParamsView = () => {
                       label: name,
                     }))}
                     placeholder="Select a symbol"
-                    onChange={(_, value) =>
-                      setTradeParams({ ...tradeParams, symbol: value.label })
+                    onChange={(_, option) =>
+                      setTradeParams({
+                        ...tradeParams,
+                        symbol: (option as { value: number; label: string })
+                          .label,
+                      })
                     }
                     value={symbol}
                   />
@@ -258,7 +284,7 @@ const ParamsView = () => {
                   }
                   value={expectedBuy}
                   onChange={(value) =>
-                    setTradeParams({ ...tradeParams, expectedBuy: value })
+                    setTradeParams({ ...tradeParams, expectedBuy: value ?? 0 })
                   }
                   style={styles.inputNumber}
                 />
@@ -270,7 +296,7 @@ const ParamsView = () => {
                   }
                   value={takeProfit}
                   onChange={(value) =>
-                    setTradeParams({ ...tradeParams, takeProfit: value })
+                    setTradeParams({ ...tradeParams, takeProfit: value ?? 0 })
                   }
                   style={styles.inputNumber}
                 />
@@ -280,7 +306,7 @@ const ParamsView = () => {
                   }
                   value={stopLoss}
                   onChange={(value) =>
-                    setTradeParams({ ...tradeParams, stopLoss: value })
+                    setTradeParams({ ...tradeParams, stopLoss: value ?? 0 })
                   }
                   style={styles.inputNumber}
                 />
