@@ -237,7 +237,7 @@ const OrderList = () => {
             className="orders-table"
             pagination={false}
             {...(screen.lg && {
-              scroll: { y: "calc(100vh - 402px)" },
+              scroll: { y: "calc(100vh - 406px)" },
             })}
             {...(!screen.md && { scroll: { x: "max-content" } })}
           />
