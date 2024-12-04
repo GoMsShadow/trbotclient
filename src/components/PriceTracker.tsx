@@ -140,14 +140,14 @@ const PriceTracker = () => {
           setSelectedSymbol(value);
         }}
       ></Tabs>
-      <div style={{ maxHeight: "calc(100vh - 146px)", overflowY: "auto" }}>
+      <div style={{ maxHeight: "calc(100vh - 150px)", overflowY: "auto" }}>
         <Table
           columns={columns}
           dataSource={dataSource}
           rowKey={"symbol"}
           pagination={false}
           className="price-table"
-          scroll={{ y: "calc(100vh - 178px)" }}
+          scroll={{ y: "calc(100vh - 182px)" }}
         />
       </div>
     </div>
