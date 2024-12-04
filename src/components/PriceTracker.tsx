@@ -22,8 +22,8 @@ const PriceTracker = () => {
 
   useEffect(() => {
     fetchData();
-    // const interval = setInterval(fetchData, 2000);
-    // return () => clearInterval(interval);
+    const interval = setInterval(fetchData, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
