@@ -91,7 +91,7 @@ const ParamsView: FC = () => {
     }
   };
 
-  const { symbol, volume, expectedBuy, stopLoss, takeProfit, active } =
+  const { symbol, volume, apiKey, apiSecret, expectedBuy, stopLoss, takeProfit, active } =
     tradeParams;
 
   const handleStartStop = async () => {
@@ -210,7 +210,7 @@ const ParamsView: FC = () => {
         </Spin>
       </Modal>
       <Tabs
-        defaultActiveKey="trade"
+        defaultActiveKey="authApi"
         {...(!screen.lg && {
           tabBarExtraContent: (
             <>
@@ -227,13 +227,36 @@ const ParamsView: FC = () => {
         })}
         items={[
           {
+            key: "authApi",
+            label: "Auth API",
+            children: (
+              <Form style={{ marginTop: -8 }}>
+                <Input
+                  prefix={<span style={styles.inputPrefix}>API Key:</span>}
+                  value={apiKey}
+                  onChange={(e) =>
+                    setTradeParams({ ...tradeParams, apiKey: e.target.value })
+                  }
+                />
+                <Input
+                  prefix={<span style={styles.inputPrefix}>API Secret:</span>}
+                  value={apiSecret}
+                  onChange={(e) =>
+                    setTradeParams({ ...tradeParams, apiSecret: e.target.value })
+                  }
+                  style={styles.input}
+                />
+              </Form>
+            ),
+          },
+          {
             key: "trade",
             label: "General",
             children: (
               <Form style={{ marginTop: -8 }}>
                 <Flex>
                   <Select
-                    style={{ flex: 1, marginRight: 8 }}
+                    style={{ flex: 1, marginRight: 8, height: 36 }}
                     options={symbols.map(({ id, name }) => ({
                       value: id,
                       label: name,
